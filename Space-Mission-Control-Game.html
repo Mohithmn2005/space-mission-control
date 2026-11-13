@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="An educational space mission design and simulation game.">
+<title>Space Mission Control</title>
+<style>
+:root{--bg:#070d1b;--panel:#101b31;--panel2:#14223c;--line:#263958;--text:#edf4ff;--muted:#9aacc8;--cyan:#58d9ef;--green:#65e0ac;--yellow:#ffd36a;--red:#ff7887}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 20% 0%,#172c50 0,#070d1b 52%);color:var(--text);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{padding:18px clamp(16px,4vw,48px);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;background:#081225d9}
+.brand{display:flex;align-items:center;gap:12px}.logo{font-size:30px}.brand h1{font-size:clamp(19px,3vw,26px);margin:0;letter-spacing:1px}.brand small{color:var(--muted)}
+.status{color:var(--green);font-size:12px;border:1px solid #2c6d5b;border-radius:20px;padding:5px 10px}
+main{max-width:1200px;margin:auto;padding:22px clamp(12px,3vw,32px) 50px}
+.tabs{display:flex;gap:8px;overflow:auto;padding-bottom:12px;margin-bottom:16px}.tab{border:1px solid var(--line);background:var(--panel);color:var(--muted);padding:10px 16px;border-radius:10px;cursor:pointer;white-space:nowrap;font-weight:650}.tab.active{background:#173858;color:#fff;border-color:var(--cyan)}
+.page{display:none}.page.active{display:block}.layout{display:grid;grid-template-columns:1.15fr .85fr;gap:16px}.panel{background:linear-gradient(145deg,#12213a,#0d172a);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 12px 32px #0003}.panel h2,.panel h3{margin:0 0 14px}.panel h2{font-size:19px}.panel h3{font-size:16px}
+.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.field{display:flex;flex-direction:column;gap:5px}.field.full{grid-column:1/-1}label{font-size:13px;color:var(--muted)}select,input{width:100%;padding:10px 11px;border-radius:9px;border:1px solid var(--line);background:#091326;color:var(--text);font:inherit}input[type=range]{padding:0;accent-color:var(--cyan)}
+button{font:inherit}.primary,.secondary,.danger{border:0;border-radius:10px;padding:11px 16px;cursor:pointer;font-weight:750}.primary{background:linear-gradient(90deg,#24b9d2,#438eea);color:#04101d}.secondary{background:#1a2b48;color:var(--text);border:1px solid var(--line)}.danger{background:#572333;color:#ffe6eb}.primary:disabled,.secondary:disabled{opacity:.4;cursor:not-allowed}.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:16px}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.stat{background:#091529;border:1px solid var(--line);padding:12px;border-radius:11px}.stat small{display:block;color:var(--muted)}.stat strong{font-size:20px}.note{font-size:12px;color:var(--muted)}
+.visual{height:220px;border-radius:12px;position:relative;overflow:hidden;background:radial-gradient(circle at 50% 50%,#203d69,#081326 70%);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+.star{position:absolute;width:2px;height:2px;background:#fff;border-radius:50%;box-shadow:0 0 5px #fff}.planet{width:100px;height:100px;border-radius:50%;background:radial-gradient(circle at 30% 28%,#b7e7fa,#397bb1 45%,#132a57 78%);box-shadow:0 0 35px #4c9fe888;position:absolute;right:14%;top:48px}.ship{font-size:42px;position:absolute;left:18%;top:85px;transition:left .8s ease,top .8s ease;filter:drop-shadow(0 0 12px #8fefff)}
+.progress{height:9px;background:#26344d;border-radius:20px;overflow:hidden}.progress span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--green));transition:width .3s}
+.resource{margin:12px 0}.resource-head{display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px}.bar{height:9px;background:#26344d;border-radius:10px;overflow:hidden}.bar span{display:block;height:100%;background:var(--green);transition:width .3s}.bar.low span{background:var(--red)}
+.stage-list{display:grid;gap:8px}.stage{padding:9px 11px;border-radius:9px;background:#0a1528;border:1px solid var(--line);color:var(--muted);font-size:13px}.stage.done{border-color:#2d8068;color:var(--green)}.stage.current{border-color:var(--cyan);color:#fff;background:#12314b}
+.log{height:170px;overflow:auto;background:#071020;border:1px solid var(--line);border-radius:10px;padding:10px;font:12px/1.6 ui-monospace,monospace;color:#c1d4ed}.log div{border-bottom:1px solid #17243a;padding:3px 0}
+.alert{padding:13px;border-radius:10px;background:#392a18;border:1px solid #80632b;color:#ffe3a0;margin:10px 0}.hidden{display:none!important}
+.report{white-space:pre-wrap;background:#081326;border:1px solid var(--line);border-radius:10px;padding:14px;min-height:130px}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:24px}
+@media(max-width:780px){.layout{grid-template-columns:1fr}.fields{grid-template-columns:1fr 1fr}.visual{height:190px}}
+@media(max-width:460px){.fields{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.panel{padding:14px}}
+</style>
+</head>
+<body>
+<header><div class="brand"><div class="logo">🚀</div><div><h1>SPACE MISSION CONTROL</h1><small>Interactive mission design & simulation</small></div></div><div class="status">● SIMULATION ONLINE</div></header>
+<main>
+<nav class="tabs" aria-label="Game sections">
+<button class="tab active" data-page="design">1. Design Mission</button><button class="tab" data-page="flight">2. Flight Control</button><button class="tab" data-page="resources">3. Resources</button><button class="tab" data-page="report">4. Mission Report</button>
+</nav>
+<section id="design" class="page active">
+<div class="layout">
+<div class="panel"><h2>Mission configuration</h2><div class="fields">
+<div class="field"><label for="destination">Destination</label><select id="destination"><option value="Moon">Moon</option><option value="Mars">Mars</option><option value="Europa">Europa</option></select></div>
+<div class="field"><label for="objective">Mission objective</label><select id="objective"><option>Scientific research</option><option>Search for water</option><option>Technology demonstration</option><option>Human exploration</option></select></div>
+<div class="field"><label for="craft">Spacecraft</label><select id="craft"><option value="Robotic lander">Robotic lander</option><option value="Crew capsule">Crew capsule</option><option value="Orbiter">Orbiter</option><option value="Cargo spacecraft">Cargo spacecraft</option></select></div>
+<div class="field"><label for="propulsion">Propulsion system</label><select id="propulsion"><option value="Chemical">Chemical</option><option value="Electric">Electric</option><option value="Hybrid">Hybrid</option></select></div>
+<div class="field"><label for="launcher">Launch vehicle</label><select id="launcher"><option value="Medium lift">Medium lift</option><option value="Heavy lift">Heavy lift</option><option value="Small launch">Small launch</option></select></div>
+<div class="field"><label for="power">Power system</label><select id="power"><option value="Solar panels">Solar panels</option><option value="Radioisotope">Radioisotope power</option><option value="Hybrid power">Hybrid power</option></select></div>
+<div class="field"><label for="comms">Communication</label><select id="comms"><option>High-gain antenna</option><option>Relay satellite</option><option>Direct radio</option></select></div>
+<div class="field"><label for="instrument">Science instrument</label><select id="instrument"><option>Camera & spectrometer</option><option>Drill & sample analyser</option><option>Radar mapper</option><option>Atmosphere sensors</option></select></div>
+<div class="field"><label for="crew">Crew size</label><input id="crew" type="number" min="0" max="8" value="0"></div>
+<div class="field"><label for="budget">Mission budget (million credits)</label><input id="budget" type="number" min="100" max="50000" value="1200"></div>
+<div class="field full"><label for="duration">Planned mission duration: <b id="durationValue">180</b> days</label><input id="duration" type="range" min="30" max="900" step="30" value="180"></div>
+</div><div class="actions"><button class="primary" id="calculate">Calculate mission</button><button class="secondary" id="start">Start mission</button></div><p class="note">All costs, masses and mission values are simplified game estimates, not official NASA engineering data.</p></div>
+<div class="panel"><h2>Mission estimate</h2><div class="stats">
+<div class="stat"><small>Estimated cost</small><strong id="cost">—</strong><small>million credits</small></div><div class="stat"><small>Spacecraft mass</small><strong id="mass">—</strong><small>tonnes</small></div><div class="stat"><small>Power demand</small><strong id="powerNeed">—</strong><small>kW</small></div><div class="stat"><small>Fuel load</small><strong id="fuelNeed">—</strong><small>tonnes (game estimate)</small></div>
+</div><div style="margin-top:16px"><h3>Mission readiness</h3><div class="progress"><span id="readiness"></span></div><p id="readinessText" class="note">Calculate your mission to check readiness.</p></div></div>
+</div></section>
+<section id="flight" class="page"><div class="layout">
+<div class="panel"><h2>Flight simulation</h2><div class="visual" id="spaceVisual"><div class="planet" id="planet"></div><div class="ship" id="ship">🚀</div></div><h3 id="flightTitle">Mission not started</h3><p id="flightDescription" class="note">Configure your mission, calculate readiness and start the simulation.</p><div class="progress"><span id="flightProgress"></span></div><p class="note" id="flightCount">Stage 0 of 8</p><div class="actions"><button class="primary" id="nextStage" disabled>Advance mission stage</button><button class="secondary" id="pause" disabled>Pause</button></div><div id="emergency" class="alert hidden"></div><div id="choices" class="actions hidden"></div></div>
+<div class="panel"><h2>Mission timeline</h2><div class="stage-list" id="stageList"></div><h3 style="margin-top:18px">Mission log</h3><div class="log" id="log"></div></div>
+</div></section>
+<section id="resources" class="page"><div class="layout"><div class="panel"><h2>On-board resources</h2><p class="note">Resources decrease as the simulated mission advances. Crew missions consume more life-support supplies.</p><div id="resourceBars"></div></div><div class="panel"><h2>Spacecraft status</h2><div class="stats"><div class="stat"><small>Mission day</small><strong id="day">0</strong></div><div class="stat"><small>Spacecraft health</small><strong id="health">100%</strong></div><div class="stat"><small>Mission score</small><strong id="score">0</strong></div><div class="stat"><small>Communications</small><strong id="commStatus">Stable</strong></div></div><h3 style="margin-top:18px">Crew status</h3><p id="crewStatus" class="note">No crew selected.</p></div></div></section>
+<section id="report" class="page"><div class="panel"><h2>Mission debrief</h2><p class="note">Your final report is generated when the simulation reaches its last stage or the spacecraft cannot continue.</p><div class="stats"><div class="stat"><small>Outcome</small><strong id="outcome">Not completed</strong></div><div class="stat"><small>Final score</small><strong id="finalScore">—</strong></div><div class="stat"><small>Stages completed</small><strong id="completed">0 / 8</strong></div><div class="stat"><small>Mission day</small><strong id="finalDay">0</strong></div></div><h3 style="margin-top:18px">Report details</h3><div class="report" id="reportText">Your mission report will appear here after the simulation.</div><div class="actions"><button class="primary" id="newMission">Create new mission</button><button class="secondary" id="downloadReport">Download report</button></div></div></section>
+</main><footer>Educational simulation only • Not affiliated with NASA • Simplified game physics and resource model</footer>
+<script>
+(()=>{
+'use strict';
+const $=id=>document.getElementById(id);
+const stages=[
+['Preparation','Systems are checked and the spacecraft is prepared.'],
+['Launch & ascent','The launch vehicle carries the spacecraft away from Earth.'],
+['Orbital insertion','The spacecraft enters its planned departure orbit.'],
+['Transfer','The spacecraft travels toward the selected destination.'],
+['Navigation','Course corrections and communication checks are performed.'],
+['Arrival / landing','The spacecraft enters orbit or attempts a landing.'],
+['Science operations','Instruments collect observations for the mission objective.'],
+['Mission conclusion','The mission is completed and the final report is prepared.']
+];
+const baseResources={fuel:100,energy:100,oxygen:100,water:100,food:100,health:100};
+let mission=null,stage=0,day=0,paused=false,waiting=false,resources={...baseResources},score=0,events=[],done=false,estimate=null;
+function tab(name){document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.page===name));document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===name))}
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>tab(b.dataset.page)));
+$('duration').addEventListener('input',()=> $('durationValue').textContent=$('duration').value);
+function config(){return {destination:$('destination').value,objective:$('objective').value,craft:$('craft').value,propulsion:$('propulsion').value,launcher:$('launcher').value,power:$('power').value,comms:$('comms').value,instrument:$('instrument').value,crew:Math.max(0,Math.min(8,Number($('crew').value)||0)),budget:Math.max(100,Number($('budget').value)||100),duration:Number($('duration').value)}}
+function calculate(){
+ mission=config();
+ let dest={Moon:1,Mars:2.8,Europa:4.2}[mission.destination],craft={'Robotic lander':8,'Crew capsule':18,Orbiter:11,'Cargo spacecraft':24}[mission.craft],prop={Chemical:1,Electric:1.25,Hybrid:1.12}[mission.propulsion],launch={'Medium lift':1,'Heavy lift':1.35,'Small launch':.78}[mission.launcher];
+ let mass=+(craft+mission.crew*1.4+(mission.duration/180)*2).toFixed(1),fuel=+(mass*dest*prop*.72).toFixed(1),power=mission.power==='Radioisotope'?2.4:mission.power==='Hybrid power'?4.2:5.5;
+ let cost=Math.round((mass*38+fuel*17+mission.duration*1.4+mission.crew*90)*dest*launch);
+ let readiness=Math.max(0,Math.min(100,Math.round(100-(cost>mission.budget?35:0)-(mission.crew>0&&mission.craft!=='Crew capsule'?20:0)-(mission.destination==='Europa'&&mission.power==='Solar panels'?15:0)-(mission.destination==='Mars'&&mission.duration<180?10:0))));
+ estimate={mass,fuel,power,cost,readiness};
+ $('cost').textContent=cost.toLocaleString();$('mass').textContent=mass;$('powerNeed').textContent=power;$('fuelNeed').textContent=fuel;$('readiness').style.width=readiness+'%';$('readinessText').textContent=readiness>=80?'Ready for launch. Check your budget and start the mission.':readiness>=55?'Mission has risks. Review your configuration.':'High-risk configuration. Improve the design before launch.';
+ $('start').disabled=false;log('Mission design calculated for '+mission.destination+'. Estimated cost: '+cost+' million credits.');return readiness;
+}
+function log(msg){let d=document.createElement('div');d.textContent='['+new Date().toLocaleTimeString()+'] '+msg;$('log').prepend(d)}
+$('calculate').addEventListener('click',calculate);
+function buildStages(){$('stageList').innerHTML='';stages.forEach((s,i)=>{let d=document.createElement('div');d.className='stage'+(i<stage?' done':i===stage&&!done?' current':'');d.textContent=(i<stage?'✓ ':i+1+'. ')+s[0];$('stageList').append(d)})}
+function resourceUI(){let names={fuel:'Fuel',energy:'Electrical power',oxygen:'Oxygen',water:'Water',food:'Food',health:'Spacecraft health'};$('resourceBars').innerHTML='';Object.keys(resources).forEach(k=>{let v=Math.max(0,Math.round(resources[k]));let wrap=document.createElement('div');wrap.className='resource';let head=document.createElement('div');head.className='resource-head';let n=document.createElement('span');n.textContent=names[k];let val=document.createElement('b');val.textContent=v+'%';head.append(n,val);let bar=document.createElement('div');bar.className='bar'+(v<25?' low':'');let fill=document.createElement('span');fill.style.width=v+'%';bar.append(fill);wrap.append(head,bar);$('resourceBars').append(wrap)})}
+function statusUI(){$('day').textContent=day;$('health').textContent=Math.round(resources.health)+'%';$('score').textContent=score;$('commStatus').textContent=resources.health<30?'Unstable':mission&&mission.comms==='Relay satellite'?'Relay link':'Stable';$('crewStatus').textContent=mission&&mission.crew?mission.crew+' crew member(s) aboard. Life-support supplies are monitored.':'Robotic mission: no crew aboard.';resourceUI()}
+function updateFlight(){let s=stages[Math.min(stage,7)];$('flightTitle').textContent=done?'Mission ended':s[0];$('flightDescription').textContent=done?'The simulation has ended. Review your mission report.':s[1];$('flightProgress').style.width=(stage/8*100)+'%';$('flightCount').textContent='Stage '+Math.min(stage,8)+' of 8';$('nextStage').disabled=done||paused||waiting;$('pause').disabled=done;$('pause').textContent=paused?'Resume':'Pause';buildStages();statusUI();$('planet').style.background=mission&&mission.destination==='Mars'?'radial-gradient(circle at 30% 28%,#ffd1a4,#b94c32 55%,#57231f 80%)':mission&&mission.destination==='Europa'?'radial-gradient(circle at 30% 28%,#e9f7ff,#9abbd1 55%,#35516e 80%)':'';$('ship').style.left=(18+Math.min(stage,7)*8)+'%';$('ship').style.top=(90-Math.min(stage,7)*5)+'px'}
+function start(){if(!estimate)calculate();mission=config();if(estimate.cost>mission.budget&&!confirm('Estimated cost exceeds your budget. Start this high-risk mission anyway?'))return;
+ stage=0;day=0;paused=false;waiting=false;done=false;score=0;resources={...baseResources};events=[];$('log').innerHTML='';$('emergency').classList.add('hidden');$('choices').classList.add('hidden');$('outcome').textContent='In progress';$('reportText').textContent='Mission underway.';log('Mission launched in simulation. Destination: '+mission.destination+'.');updateFlight();tab('flight')}
+$('start').addEventListener('click',start);
+function emergency(){let pool=[
+{title:'Solar panel malfunction',desc:'Power generation has dropped. Choose a response.',a:'Use backup power (lose 12 energy)',b:'Attempt repair (risk 8 health)',fn:x=>{if(x===0)resources.energy-=12;else resources.health-=8}},
+{title:'Fuel leakage detected',desc:'A leak is reducing the fuel reserve.',a:'Seal the leak (lose 10 energy)',b:'Continue mission (lose 18 fuel)',fn:x=>{if(x===0){resources.energy-=10;resources.fuel-=3}else resources.fuel-=18}},
+{title:'Communication failure',desc:'The spacecraft has lost its primary communication link.',a:'Switch to backup link (lose 8 energy)',b:'Operate autonomously (lose 5 score)',fn:x=>{if(x===0)resources.energy-=8;else score-=5}},
+{title:'Overheating warning',desc:'A subsystem temperature is above its safe operating range.',a:'Reduce power (lose 10 energy)',b:'Continue operations (lose 12 health)',fn:x=>{if(x===0)resources.energy-=10;else resources.health-=12}},
+{title:'Navigation error',desc:'The spacecraft is slightly off its planned route.',a:'Perform correction (lose 12 fuel)',b:'Accept deviation (lose 10 score)',fn:x=>{if(x===0)resources.fuel-=12;else score-=10}}
+];
+let e=pool[Math.floor(Math.random()*pool.length)];waiting=true;$('emergency').classList.remove('hidden');$('emergency').textContent='⚠ '+e.title+' — '+e.desc;$('choices').innerHTML='';$('choices').classList.remove('hidden');
+[e.a,e.b].forEach((label,i)=>{let b=document.createElement('button');b.className='secondary';b.textContent=label;b.addEventListener('click',()=>{e.fn(i);events.push(e.title+': '+label);log('Decision: '+e.title+' — '+label);$('emergency').classList.add('hidden');$('choices').classList.add('hidden');waiting=false;checkFailure();updateFlight()});$('choices').append(b)});log('Emergency: '+e.title)}
+function checkFailure(){if(Object.values(resources).some(v=>v<=0)){finish(false,'A critical resource reached zero. The spacecraft could not safely continue.');return true}return false}
+function advance(){if(done||paused||waiting)return;if(stage>=8)return;
+ stage++;day+=Math.round(mission.duration/8);let factor=mission.crew?1.15:1;
+ resources.fuel-=stage===4?16:stage===6?8:stage===2?9:5;
+ resources.energy-=stage===7?18:7;
+ if(mission.crew){resources.oxygen-=5*factor;resources.water-=4*factor;resources.food-=4*factor}
+ if(stage===5&&mission.destination==='Mars')resources.fuel-=8;
+ resources.health-=Math.random()<.18?4:1;
+ Object.keys(resources).forEach(k=>resources[k]=Math.max(0,Math.min(100,resources[k])));
+ score+=Math.max(4,12-(resources.health<40?4:0));log('Completed stage: '+stages[stage-1][0]+'.');if(checkFailure()){updateFlight();return}
+ if(stage===2||stage===4||stage===6){updateFlight();emergency();return}
+ if(stage>=8){finish(true,'All mission stages completed. Science operations and mission conclusion were successful.');return}
+ updateFlight();
+}
+$('nextStage').addEventListener('click',advance);$('pause').addEventListener('click',()=>{if(done)return;paused=!paused;log(paused?'Simulation paused.':'Simulation resumed.');updateFlight()});
+function finish(success,reason){done=true;paused=false;score=Math.max(0,score+(success?25:0));$('outcome').textContent=success?'Successful':'Unsuccessful';$('finalScore').textContent=score;$('completed').textContent=stage+' / 8';$('finalDay').textContent=day;$('reportText').textContent=
+'MISSION: '+(mission?mission.destination:'Not configured')+'\nOBJECTIVE: '+(mission?mission.objective:'—')+'\nOUTCOME: '+(success?'SUCCESS':'FAILURE')+'\n\nSUMMARY: '+reason+'\n\nMISSION DAYS: '+day+'\nSTAGES COMPLETED: '+stage+'/8\nFINAL SCORE: '+score+'\n\nFINAL RESOURCES:\n'+Object.entries(resources).map(([k,v])=>k.toUpperCase()+': '+Math.round(v)+'%').join('\n')+'\n\nDECISIONS & EVENTS:\n'+(events.length?events.join('\n'):'No emergency decisions recorded.')+'\n\nNOTE: Educational game simulation; values are not real mission predictions.';log('Mission '+(success?'completed successfully.':'ended unsuccessfully.'));$('nextStage').disabled=true;$('pause').disabled=true;updateFlight();tab('report')}
+$('newMission').addEventListener('click',()=>{done=false;estimate=null;mission=null;stage=0;day=0;score=0;resources={...baseResources};$('start').disabled=true;$('nextStage').disabled=true;$('log').innerHTML='';$('reportText').textContent='Your mission report will appear here after the simulation.';$('outcome').textContent='Not completed';$('finalScore').textContent='—';$('completed').textContent='0 / 8';$('finalDay').textContent='0';$('cost').textContent='—';$('mass').textContent='—';$('powerNeed').textContent='—';$('fuelNeed').textContent='—';$('readiness').style.width='0';tab('design');buildStages();statusUI()});
+$('downloadReport').addEventListener('click',()=>{let text=$('reportText').textContent;let blob=new Blob([text],{type:'text/plain'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='space-mission-report.txt';a.click();URL.revokeObjectURL(a.href)});
+$('start').disabled=true;buildStages();resourceUI();
+})();
+</script>
+</body>
+</html>
