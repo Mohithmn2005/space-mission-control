@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="An educational space mission design and simulation game.">
+<meta name="description" content="An educational space mission design and simulation game with NASA destination science facts.">
 <title>Space Mission Control</title>
 <style>
 :root{--bg:#070d1b;--panel:#101b31;--panel2:#14223c;--line:#263958;--text:#edf4ff;--muted:#9aacc8;--cyan:#58d9ef;--green:#65e0ac;--yellow:#ffd36a;--red:#ff7887}
@@ -25,8 +26,16 @@ button{font:inherit}.primary,.secondary,.danger{border:0;border-radius:10px;padd
 .log{height:170px;overflow:auto;background:#071020;border:1px solid var(--line);border-radius:10px;padding:10px;font:12px/1.6 ui-monospace,monospace;color:#c1d4ed}.log div{border-bottom:1px solid #17243a;padding:3px 0}
 .alert{padding:13px;border-radius:10px;background:#392a18;border:1px solid #80632b;color:#ffe3a0;margin:10px 0}.hidden{display:none!important}
 .report{white-space:pre-wrap;background:#081326;border:1px solid var(--line);border-radius:10px;padding:14px;min-height:130px}
+.nasa-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.nasa-card{background:linear-gradient(145deg,#142746,#0b172b);border:1px solid var(--line);border-radius:14px;padding:18px}
+.nasa-card h3{color:var(--cyan);margin:0 0 12px}
+.nasa-card p{margin:9px 0}
+.nasa-card a{color:var(--cyan);text-decoration:none;font-weight:650}
+.nasa-card a:hover{text-decoration:underline}
+.nasa-intro{color:var(--muted);margin-top:-5px}
+.nasa-note{margin-top:16px;background:#091529;border:1px solid var(--line);border-radius:12px;padding:16px}
 footer{text-align:center;color:var(--muted);font-size:12px;padding:24px}
-@media(max-width:780px){.layout{grid-template-columns:1fr}.fields{grid-template-columns:1fr 1fr}.visual{height:190px}}
+@media(max-width:780px){.layout{grid-template-columns:1fr}.fields{grid-template-columns:1fr 1fr}.visual{height:190px}.nasa-grid{grid-template-columns:1fr}}
 @media(max-width:460px){.fields{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.panel{padding:14px}}
 </style>
 </head>
@@ -34,8 +43,13 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:24px}
 <header><div class="brand"><div class="logo">🚀</div><div><h1>SPACE MISSION CONTROL</h1><small>Interactive mission design & simulation</small></div></div><div class="status">● SIMULATION ONLINE</div></header>
 <main>
 <nav class="tabs" aria-label="Game sections">
-<button class="tab active" data-page="design">1. Design Mission</button><button class="tab" data-page="flight">2. Flight Control</button><button class="tab" data-page="resources">3. Resources</button><button class="tab" data-page="report">4. Mission Report</button>
+<button class="tab active" data-page="design">1. Design Mission</button>
+<button class="tab" data-page="flight">2. Flight Control</button>
+<button class="tab" data-page="resources">3. Resources</button>
+<button class="tab" data-page="report">4. Mission Report</button>
+<button class="tab" data-page="nasa-data">5. NASA Data</button>
 </nav>
+
 <section id="design" class="page active">
 <div class="layout">
 <div class="panel"><h2>Mission configuration</h2><div class="fields">
@@ -55,13 +69,79 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:24px}
 <div class="stat"><small>Estimated cost</small><strong id="cost">—</strong><small>million credits</small></div><div class="stat"><small>Spacecraft mass</small><strong id="mass">—</strong><small>tonnes</small></div><div class="stat"><small>Power demand</small><strong id="powerNeed">—</strong><small>kW</small></div><div class="stat"><small>Fuel load</small><strong id="fuelNeed">—</strong><small>tonnes (game estimate)</small></div>
 </div><div style="margin-top:16px"><h3>Mission readiness</h3><div class="progress"><span id="readiness"></span></div><p id="readinessText" class="note">Calculate your mission to check readiness.</p></div></div>
 </div></section>
+
 <section id="flight" class="page"><div class="layout">
 <div class="panel"><h2>Flight simulation</h2><div class="visual" id="spaceVisual"><div class="planet" id="planet"></div><div class="ship" id="ship">🚀</div></div><h3 id="flightTitle">Mission not started</h3><p id="flightDescription" class="note">Configure your mission, calculate readiness and start the simulation.</p><div class="progress"><span id="flightProgress"></span></div><p class="note" id="flightCount">Stage 0 of 8</p><div class="actions"><button class="primary" id="nextStage" disabled>Advance mission stage</button><button class="secondary" id="pause" disabled>Pause</button></div><div id="emergency" class="alert hidden"></div><div id="choices" class="actions hidden"></div></div>
 <div class="panel"><h2>Mission timeline</h2><div class="stage-list" id="stageList"></div><h3 style="margin-top:18px">Mission log</h3><div class="log" id="log"></div></div>
 </div></section>
+
 <section id="resources" class="page"><div class="layout"><div class="panel"><h2>On-board resources</h2><p class="note">Resources decrease as the simulated mission advances. Crew missions consume more life-support supplies.</p><div id="resourceBars"></div></div><div class="panel"><h2>Spacecraft status</h2><div class="stats"><div class="stat"><small>Mission day</small><strong id="day">0</strong></div><div class="stat"><small>Spacecraft health</small><strong id="health">100%</strong></div><div class="stat"><small>Mission score</small><strong id="score">0</strong></div><div class="stat"><small>Communications</small><strong id="commStatus">Stable</strong></div></div><h3 style="margin-top:18px">Crew status</h3><p id="crewStatus" class="note">No crew selected.</p></div></div></section>
+
 <section id="report" class="page"><div class="panel"><h2>Mission debrief</h2><p class="note">Your final report is generated when the simulation reaches its last stage or the spacecraft cannot continue.</p><div class="stats"><div class="stat"><small>Outcome</small><strong id="outcome">Not completed</strong></div><div class="stat"><small>Final score</small><strong id="finalScore">—</strong></div><div class="stat"><small>Stages completed</small><strong id="completed">0 / 8</strong></div><div class="stat"><small>Mission day</small><strong id="finalDay">0</strong></div></div><h3 style="margin-top:18px">Report details</h3><div class="report" id="reportText">Your mission report will appear here after the simulation.</div><div class="actions"><button class="primary" id="newMission">Create new mission</button><button class="secondary" id="downloadReport">Download report</button></div></div></section>
-</main><footer>Educational simulation only • Not affiliated with NASA • Simplified game physics and resource model</footer>
+
+<!-- NASA DATA SECTION -->
+<section id="nasa-data" class="page">
+<div class="panel">
+<h2>🌍 NASA Destination Science Data</h2>
+<p class="nasa-intro">Explore real science information about the destinations available in this educational mission simulator.</p>
+</div>
+
+<div class="nasa-grid">
+<article class="nasa-card">
+<h3>🌙 THE MOON</h3>
+<p><b>Average distance from Earth:</b> About 384,400 km.</p>
+<p><b>Radius:</b> About 1,740 km.</p>
+<p><b>Surface:</b> A rocky world covered with craters, mountains and fine lunar dust.</p>
+<p><b>Water:</b> Water ice is present in some permanently shadowed regions near the lunar poles.</p>
+<p><b>Environment:</b> The Moon has almost no atmosphere and experiences extreme temperature changes.</p>
+<p><b>Mission challenge:</b> Spacecraft must consider landing terrain, sunlight, temperature and communication.</p>
+<p><a href="https://science.nasa.gov/moon/facts/" target="_blank" rel="noopener noreferrer">Read NASA Moon Facts ↗</a></p>
+</article>
+
+<article class="nasa-card">
+<h3>🔴 MARS</h3>
+<p><b>Average distance from the Sun:</b> About 228 million km.</p>
+<p><b>Length of a day:</b> About 24.6 Earth hours.</p>
+<p><b>Length of a year:</b> About 687 Earth days.</p>
+<p><b>Atmosphere:</b> Very thin and composed mostly of carbon dioxide.</p>
+<p><b>Surface:</b> A cold desert with volcanoes, valleys, craters and evidence of ancient flowing water.</p>
+<p><b>Mission challenge:</b> Dust storms, cold temperatures, communication delays and safe landing.</p>
+<p><a href="https://science.nasa.gov/mars/facts/" target="_blank" rel="noopener noreferrer">Read NASA Mars Facts ↗</a></p>
+</article>
+
+<article class="nasa-card">
+<h3>🪐 EUROPA — JUPITER'S MOON</h3>
+<p><b>Location:</b> Europa is one of the major moons of Jupiter.</p>
+<p><b>Average distance from Jupiter:</b> About 671,000 km.</p>
+<p><b>Surface:</b> An icy crust marked by cracks, ridges and bands.</p>
+<p><b>Ocean:</b> Evidence suggests a salty liquid-water ocean beneath its icy shell.</p>
+<p><b>Environment:</b> Europa experiences intense radiation from Jupiter's magnetic environment.</p>
+<p><b>Mission challenge:</b> Radiation protection, remote observations and studying the icy surface.</p>
+<p><a href="https://science.nasa.gov/jupiter/jupiter-moons/europa/europa-facts/" target="_blank" rel="noopener noreferrer">Read NASA Europa Facts ↗</a></p>
+</article>
+
+<article class="nasa-card">
+<h3>🚀 NASA MISSION PLANNING</h3>
+<p><b>1. Select a destination:</b> Choose the Moon, Mars or Europa in the Design Mission section.</p>
+<p><b>2. Choose a spacecraft:</b> Select a lander, orbiter, crew capsule or cargo spacecraft.</p>
+<p><b>3. Select technology:</b> Consider propulsion, launch vehicle, power and communication systems.</p>
+<p><b>4. Consider the environment:</b> Use the destination facts to understand the challenges facing a real spacecraft.</p>
+<p><b>5. Run the simulation:</b> Start your mission, advance through the stages and monitor resources.</p>
+</article>
+</div>
+
+<div class="nasa-note">
+<h3>📚 ABOUT THE NASA DATA</h3>
+<p>The science facts on this page are provided as educational background information. Use the NASA links to explore the original science resources.</p>
+<p>The mission cost, spacecraft mass, power demand, fuel, mission duration and resource values calculated by this game are simplified educational estimates. They are not official NASA mission data, live telemetry or engineering predictions.</p>
+<p><b>Project note:</b> Space Mission Control is an independent educational simulation. It is not an official NASA product and is not endorsed by NASA.</p>
+</div>
+</section>
+<!-- END NASA DATA SECTION -->
+
+</main>
+<footer>Educational simulation only • Not affiliated with NASA • Simplified game physics and resource model</footer>
+
 <script>
 (()=>{
 'use strict';
